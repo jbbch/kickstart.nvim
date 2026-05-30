@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -110,7 +110,7 @@ do
   vim.o.number = true
   -- You can also add relative line numbers, to help with jumping.
   --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  vim.o.relativenumber = true
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -126,6 +126,12 @@ do
 
   -- Enable break indent
   vim.o.breakindent = true
+
+  -- Use 2-space indentation by default, matching common Prettier defaults.
+  vim.opt.expandtab = true
+  vim.opt.shiftwidth = 2
+  vim.opt.tabstop = 2
+  vim.opt.softtabstop = 2
 
   -- Enable undo/redo changes even after closing and reopening a file
   vim.o.undofile = true
@@ -204,6 +210,12 @@ do
   }
 
   vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+  vim.keymap.set(
+    'n',
+    '<leader>d',
+    function() vim.diagnostic.open_float(nil, { scope = 'cursor', border = 'rounded', source = 'if_many' }) end,
+    { desc = 'Show diagnostics under cursor' }
+  )
 
   -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
   -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -383,7 +395,13 @@ do
   -- change the command under that to load whatever the name of that colorscheme is.
   --
   -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-  vim.pack.add { gh 'folke/tokyonight.nvim' }
+  -- Installed themes. Use `:Telescope colorscheme enable_preview=true` to preview them.
+  vim.pack.add {
+    gh 'folke/tokyonight.nvim',
+    gh 'navarasu/onedark.nvim',
+    gh 'morhetz/gruvbox',
+  }
+
   ---@diagnostic disable-next-line: missing-fields
   require('tokyonight').setup {
     styles = {
@@ -391,9 +409,11 @@ do
     },
   }
 
-  -- Load the colorscheme here.
-  -- Like many other themes, this one has different styles, and you could load
-  -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  require('onedark').setup {
+    style = 'darker',
+  }
+
+  -- Active colorscheme. Change this line to switch back, e.g. `vim.cmd.colorscheme 'tokyonight'`.
   vim.cmd.colorscheme 'tokyonight-night'
 
   -- Highlight todo, notes, etc in comments
@@ -688,14 +708,14 @@ do
   local servers = {
     -- clangd = {},
     -- gopls = {},
-    -- pyright = {},
+    pyright = {},
     -- rust_analyzer = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
 
     stylua = {}, -- Used to format Lua code
 
@@ -773,18 +793,10 @@ do
   vim.pack.add { gh 'stevearc/conform.nvim' }
   require('conform').setup {
     notify_on_error = false,
-    format_on_save = function(bufnr)
-      -- You can specify filetypes to autoformat on save here:
-      local enabled_filetypes = {
-        -- lua = true,
-        -- python = true,
-      }
-      if enabled_filetypes[vim.bo[bufnr].filetype] then
-        return { timeout_ms = 500 }
-      else
-        return nil
-      end
-    end,
+    format_on_save = {
+      timeout_ms = 500,
+      lsp_format = 'fallback', -- Use external formatters if configured below, otherwise use LSP formatting. Set to `false` to disable LSP formatting entirely.
+    },
     default_format_opts = {
       lsp_format = 'fallback', -- Use external formatters if configured below, otherwise use LSP formatting. Set to `false` to disable LSP formatting entirely.
     },
@@ -795,7 +807,12 @@ do
       -- python = { "isort", "black" },
       --
       -- You can use 'stop_after_first' to run the first available formatter from the list
-      -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      javascript = { 'prettierd', 'prettier', stop_after_first = true },
+      typescript = { 'prettierd', 'prettier', stop_after_first = true },
+      json = { 'prettierd', 'prettier', stop_after_first = true },
+      html = { 'prettierd', 'prettier', stop_after_first = true },
+      css = { 'prettierd', 'prettier', stop_after_first = true },
+      markdown = { 'prettierd', 'prettier', stop_after_first = true },
     },
   }
 
@@ -873,11 +890,11 @@ do
     -- Blink.cmp includes an optional, recommended rust fuzzy matcher,
     -- which automatically downloads a prebuilt binary when enabled.
     --
-    -- By default, we use the Lua implementation instead, but you may enable
-    -- the rust implementation via `'prefer_rust_with_warning'`
+    -- Prefer the native Rust implementation for better fuzzy matching and
+    -- performance. Falls back to the Lua implementation if unavailable.
     --
     -- See `:help blink-cmp-config-fuzzy` for more information
-    fuzzy = { implementation = 'lua' },
+    fuzzy = { implementation = 'prefer_rust' },
 
     -- Shows a signature help window while you type arguments for a function
     signature = { enabled = true },
@@ -911,8 +928,10 @@ do
 
     -- Enable treesitter based folds
     -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
+    vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+    vim.wo.foldmethod = 'expr'
+    -- foldlevel = 99 sets buffer to not fold automatically when open
+    vim.wo.foldlevel = 99
 
     -- Check if treesitter indentation is available for this language, and if so enable it
     -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
@@ -963,9 +982,9 @@ do
   -- require 'kickstart.plugins.debug'
   -- require 'kickstart.plugins.indent_line'
   -- require 'kickstart.plugins.lint'
-  -- require 'kickstart.plugins.autopairs'
-  -- require 'kickstart.plugins.neo-tree'
-  -- require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
+  require 'kickstart.plugins.autopairs'
+  require 'kickstart.plugins.neo-tree'
+  require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
 
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
