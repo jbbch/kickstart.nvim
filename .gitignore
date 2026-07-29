@@ -11,4 +11,7 @@ spell/
 # merge conflicts.
 nvim-pack-lock.json
 
+# Personal fork: track exact plugin revisions for reproducible installs.
+!nvim-pack-lock.json
+
 .DS_Store

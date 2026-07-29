@@ -1,17 +1,11 @@
 -- Neo-tree is a Neovim plugin to browse the file system
 -- https://github.com/nvim-neo-tree/neo-tree.nvim
 
-local plugins = {
+vim.pack.add {
   { src = 'https://github.com/nvim-neo-tree/neo-tree.nvim', version = vim.version.range '*' },
   'https://github.com/nvim-lua/plenary.nvim',
   'https://github.com/MunifTanjim/nui.nvim',
 }
-
-if vim.g.have_nerd_font then
-  table.insert(plugins, 'https://github.com/nvim-tree/nvim-web-devicons') -- not strictly required, but recommended
-end
-
-vim.pack.add(plugins)
 
 vim.keymap.set('n', '\\', '<Cmd>Neotree reveal<CR>', { desc = 'NeoTree reveal', silent = true })
 
@@ -22,8 +16,7 @@ require('neo-tree').setup {
       -- Press `H` in Neo-tree to temporarily reveal filtered items.
       visible = false,
 
-      -- Hide dotfiles by default, then opt useful project dotfiles back in below.
-      -- This keeps the `H` toggle behavior predictable.
+      -- Keep dotfiles visible unless they are ignored or explicitly hidden below.
       hide_dotfiles = false,
 
       -- Hide files/folders ignored by Git or ignore-style files by default
@@ -31,9 +24,10 @@ require('neo-tree').setup {
       hide_gitignored = true,
       hide_ignored = true,
 
-      -- Mostly relevant on Windows; dotfiles cover the common macOS/Linux case.
+      -- Keep filesystem-hidden items visible unless another filter hides them.
       hide_hidden = false,
 
+      -- Keep useful project metadata visible even when an ignore rule matches.
       always_show = {
         '.gitignore',
         '.github',
